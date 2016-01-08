@@ -30,8 +30,8 @@ public class HttpConnector implements Runnable{
 				continue;
 			}
 			
-			HttpProcessor processor = new HttpProcessor();
-			processor
+			HttpProcessor processor = new HttpProcessor(this);
+			processor.process(socket);
 		}
 		
 	}

@@ -203,6 +203,153 @@ public class SocketInputStream extends InputStream {
         requestLine.protocolEnd = readCount;
 	}
 	
+	public void readHeader(HttpHeader header) throws IOException {
+		
+		if(header.nameEnd != 0) header.recycle();
+		
+		int chr = read();
+		if((chr == CR) || (chr == LF)) {
+			if(chr == CR) read();
+			header.nameEnd = 0;
+			header.valueEnd = 0;
+			return;
+		} else {
+			pos--;
+		}
+		
+		int maxRead = header.name.length;
+		int readStart = pos;
+		int readCount = 0;
+		
+		boolean colon = false;
+		
+		while(!colon) {
+			if(readCount >= maxRead) {
+				if((2*maxRead) <= HttpHeader.MAX_NAME_SIZE) {
+					char[] newBuffer = new char[2 * maxRead];
+					System.arraycopy(header.name, 0, newBuffer, 0, maxRead);
+					header.name = newBuffer;
+					maxRead = header.name.length;
+				} else {
+					throw new IOException
+						(sm.getString("requestStream.readline.toolong"));
+				}
+			}
+			
+			if(pos >= count) {
+				int val = read();
+				if(val == -1) {
+					throw new IOException
+						(sm.getString("requestStream.readline.error"));
+				}
+				pos = 0;
+				readStart = 0;
+			}
+			
+			if(buf[pos] == COLON) {
+				colon = true;
+			}
+			
+			char val = (char) buf[pos];
+			if((val >= 'A') && (val <= 'Z')) {
+				val = (char) (val - LC_OFFSET);
+			}
+			header.name[readCount] = val;
+			readCount++;
+			pos++;
+		}
+		
+		header.nameEnd = readCount - 1;
+		
+		maxRead = header.value.length;
+		readStart = pos;
+		readCount = 0;
+		
+		int crPos = -2;
+		
+		boolean eol = false;
+		boolean validLine = true;
+		
+		while(validLine) {
+			boolean space = true;
+			
+			while(space) {
+				if(pos >= count) {
+					int val = read();
+					if(val == -1) {
+						throw new IOException
+							(sm.getString("requestStream.readline.error"));
+					}
+					pos = 0;
+					readStart = 0;
+				}
+				if((buf[pos] == SP) || (buf[pos] == HT)) {
+					pos++;
+				}else {
+					space = false;
+				}
+			}
+			
+			while(!eol) {
+				if (readCount >= maxRead) {
+                    if ((2 * maxRead) <= HttpHeader.MAX_VALUE_SIZE) {
+                        char[] newBuffer = new char[2 * maxRead];
+                        System.arraycopy(header.value, 0, newBuffer, 0,
+                                         maxRead);
+                        header.value = newBuffer;
+                        maxRead = header.value.length;
+                    } else {
+                        throw new IOException
+                            (sm.getString("requestStream.readline.toolong"));
+                    }
+                }
+				
+				if(pos >= count) {
+					int val = read();
+                    if (val == -1)
+                        throw new IOException
+                            (sm.getString("requestStream.readline.error"));
+                    pos = 0;
+                    readStart = 0;
+				}
+				if(buf[pos] == CR) {
+				}else if(buf[pos] == LF) {
+					eol = true;
+				}else {
+					int ch = buf[pos] & 0xff;
+					header.value[readCount] = (char) ch;
+					readCount++;
+				}
+				pos++;
+			}
+			
+			int nextChr = read();
+			
+			if((nextChr != SP) && (nextChr != HT)) {
+				pos--;
+				validLine = false;
+			} else {
+				eol = false;
+				if(readCount >= maxRead) {
+					if ((2 * maxRead) <= HttpHeader.MAX_VALUE_SIZE) {
+                        char[] newBuffer = new char[2 * maxRead];
+                        System.arraycopy(header.value, 0, newBuffer, 0,
+                                         maxRead);
+                        header.value = newBuffer;
+                        maxRead = header.value.length;
+                    } else {
+                        throw new IOException
+                            (sm.getString("requestStream.readline.toolong"));
+                    }
+				}
+				header.value[readCount] = ' ';
+				readCount++;
+			}
+		}
+		
+		header.valueEnd = readCount;
+	}
+	
 	@Override
 	public int read() throws IOException {
 		if(pos >= count) {
