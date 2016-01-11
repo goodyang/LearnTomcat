@@ -9,15 +9,26 @@ import org.apache.catalina.util.StringManager;
 public class SocketInputStream extends InputStream {
 
 	//---------------------------------------------------常量
-	
+	/**
+	 * 回车符
+	 */
 	private static final byte CR = (byte) '\r';
 	
+	/**
+	 * 换行符
+	 */
 	private static final byte LF = (byte) '\n';
 	
 	private static final byte SP = (byte) ' ';
 	
+	/**
+	 *制表符 
+	 */
 	private static final byte HT = (byte) '\t';
 	
+	/**
+	 * 冒号
+	 */
 	private static final byte COLON = (byte) ':';
 	
 	/**
@@ -27,6 +38,9 @@ public class SocketInputStream extends InputStream {
 	
 	protected byte buf[];
 	
+	/**
+	 * 当前读取到buf中的byte长度
+	 */
 	protected int count;
 	
 	/**
@@ -53,9 +67,11 @@ public class SocketInputStream extends InputStream {
 	
 	public void readRequestLine(HttpRequestLine requestLine) 
 			throws IOException{
-		if(requestLine.methodEnd != 0) requestLine.recycle();
+		if(requestLine.methodEnd != 0) requestLine.recycle();//重置再利用
 		
 		int chr = 0;
+		
+		//跳过空白字符
 		do{
 			try {
 				chr = read();
@@ -68,11 +84,11 @@ public class SocketInputStream extends InputStream {
 			throw new EOFException(sm.getString("requestStream.readline.error"));
 		}
 		
-		pos--;//
+		pos--;//检测完之后，需要后退一个位置
 		
 		int maxRead = requestLine.method.length;
 		int readStart = pos;
-		int readCount = 0;
+		int readCount = 0;//记录读取长度
 		
 		boolean space = false;
 		
@@ -101,6 +117,7 @@ public class SocketInputStream extends InputStream {
 				readStart = 0;
 			}
 			
+			//已空格分隔
 			if(buf[pos] == SP) {
 				space = true;
 			}
@@ -353,7 +370,7 @@ public class SocketInputStream extends InputStream {
 	@Override
 	public int read() throws IOException {
 		if(pos >= count) {
-			fill();
+			fill();//读取一次，重新填满
 			if(pos >= count) return -1;
 		}
 		
@@ -371,6 +388,10 @@ public class SocketInputStream extends InputStream {
 		buf = null;
 	}
 	
+	/**
+	 * buf中字符解析完后，再从input中读取一次
+	 * @throws IOException
+	 */
 	protected void fill() throws IOException {
 		pos = 0;
 		count = 0;

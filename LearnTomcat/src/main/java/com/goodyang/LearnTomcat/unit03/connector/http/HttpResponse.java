@@ -483,30 +483,30 @@ public class HttpResponse implements HttpServletResponse {
 	  }
 
 	  public void setHeader(String name, String value) {
-	    if (isCommitted())
-	      return;
+		  if (isCommitted())
+			  return;
 //	    if (included)
 	  //    return;     // Ignore any call from an included servlet
-	    ArrayList values = new ArrayList();
-	    values.add(value);
-	    synchronized (headers) {
-	      headers.put(name, values);
-	    }
-	    String match = name.toLowerCase();
-	    if (match.equals("content-length")) {
-	      int contentLength = -1;
-	      try {
-	        contentLength = Integer.parseInt(value);
-	      }
-	      catch (NumberFormatException e) {
-	        ;
-	      }
-	      if (contentLength >= 0)
-	        setContentLength(contentLength);
-	    }
-	    else if (match.equals("content-type")) {
-	      setContentType(value);
-	    }
+		  ArrayList values = new ArrayList();
+		  values.add(value);
+		  synchronized (headers) {
+			  headers.put(name, values);
+		  }
+		  String match = name.toLowerCase();
+		  if (match.equals("content-length")) {
+			  int contentLength = -1;
+			  try {
+				  contentLength = Integer.parseInt(value);
+			  }
+			  catch (NumberFormatException e) {
+				  ;
+			  }
+			  if (contentLength >= 0)
+				  setContentLength(contentLength);
+		  }
+		  else if (match.equals("content-type")) {
+			  setContentType(value);
+		  }
 	  }
 
 	  public void setIntHeader(String name, int value) {

@@ -99,8 +99,9 @@ public class HttpRequest implements HttpServletRequest {
 	}
 	
 	protected void parseParameters() {
-		if(parsed) return;
+		if(parsed) return;//检测是否已经读取过一次parameters
 		
+		//parameterMap读取parameter后，lock，即servlet开发者不能修改保存的参数
 		ParameterMap results = parameters;
 		
 		if(results == null) results = new ParameterMap();

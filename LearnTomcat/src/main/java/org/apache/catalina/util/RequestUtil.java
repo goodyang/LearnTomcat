@@ -181,16 +181,19 @@ public final class RequestUtil {
 
 		ArrayList cookies = new ArrayList();
 		while (header.length() > 0) {
+			//先根据分号截取
 			int semicolon = header.indexOf(';');
 			if (semicolon < 0)
 				semicolon = header.length();
 			if (semicolon == 0)
 				break;
 			String token = header.substring(0, semicolon);
+			//找到分号，把这一段从header中截取
 			if (semicolon < header.length())
 				header = header.substring(semicolon + 1);
 			else
 				header = "";
+			//根据等号来获取此段cookie的键值对
 			try {
 				int equals = token.indexOf('=');
 				if (equals > 0) {
